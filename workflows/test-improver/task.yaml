@@ -1,0 +1,55 @@
+apiVersion: core.orka.ai/v1alpha1
+kind: Task
+metadata:
+  generateName: test-improver-
+spec:
+  type: agent
+  agentRef:
+    name: workflows-codex
+  timeout: 10m
+  retryPolicy:
+    maxRetries: 0
+  agentRuntime:
+    maxTurns: 24
+  workspace:
+    intent: write
+    # Use your fork for both source and publication. Set both branches to its base.
+    gitRepo: https://github.com/YOUR-OWNER/orka-workflows.git
+    branch: YOUR-BASE-BRANCH
+    publicationGitRepo: https://github.com/YOUR-OWNER/orka-workflows.git
+    prBaseBranch: YOUR-BASE-BRANCH
+    readCredentialRef:
+      name: workflows-read
+    publicationReadCredentialRef:
+      name: workflows-read
+    publicationCredentialRef:
+      name: workflows-publish
+    forgeCredentialRef:
+      name: workflows-forge
+    createPR: true
+    allowedPaths:
+      - demo/test.sh
+    maxChangedFiles: 1
+    denyRepositoryControlPaths: true
+    rejectBinaryFiles: true
+    rejectSecretLikeContent: true
+  prompt: |
+    test: cover textkit edge cases
+
+    Improve only demo/test.sh. Read demo/textkit.sh and the existing tests first.
+    Before editing, run sh demo/test.sh from the repository root. Stop without
+    changes if the baseline fails or these files are missing.
+
+    Add three to five deterministic cases for uncovered behavior. Consider empty
+    input, all separators, embedded newlines, already-normalized values, no titles,
+    and deduplication boundaries. slugify retains only lowercase ASCII letters and
+    digits, collapses other runs to a hyphen, and trims edge hyphens. unique_slugs
+    omits empty results and preserves the first occurrence of each normalized slug.
+    Use POSIX sh and the current assertion style. Keep every existing assertion;
+    do not weaken checks, install tools, or edit the implementation or docs.
+    Make the reported test count accurate. If you find an implementation bug,
+    report it rather than changing code or adding a known-failing test.
+
+    Run sh -n demo/test.sh and sh demo/test.sh after editing. Check that only
+    demo/test.sh changed. If validation fails, undo only your own edits and report
+    the failure. Return the gaps covered and actual commands and results.
