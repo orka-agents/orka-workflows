@@ -1,0 +1,55 @@
+apiVersion: core.orka.ai/v1alpha1
+kind: Task
+metadata:
+  generateName: code-simplifier-
+spec:
+  type: agent
+  agentRef:
+    name: workflows-codex
+  timeout: 10m
+  retryPolicy:
+    maxRetries: 0
+  agentRuntime:
+    maxTurns: 24
+  workspace:
+    intent: write
+    # Use your fork for both source and publication. Set both branches to its base.
+    gitRepo: https://github.com/YOUR-OWNER/orka-workflows.git
+    branch: YOUR-BASE-BRANCH
+    publicationGitRepo: https://github.com/YOUR-OWNER/orka-workflows.git
+    prBaseBranch: YOUR-BASE-BRANCH
+    readCredentialRef:
+      name: workflows-read
+    publicationReadCredentialRef:
+      name: workflows-read
+    publicationCredentialRef:
+      name: workflows-publish
+    forgeCredentialRef:
+      name: workflows-forge
+    createPR: true
+    allowedPaths:
+      - demo/textkit.sh
+    maxChangedFiles: 1
+    denyRepositoryControlPaths: true
+    rejectBinaryFiles: true
+    rejectSecretLikeContent: true
+  prompt: |
+    refactor: remove duplicate textkit normalization
+
+    Simplify only demo/textkit.sh without changing its public behavior. Read that
+    file and demo/test.sh. Before editing, run sh demo/test.sh from the repository
+    root. Stop without changes if the baseline fails or these files are missing.
+
+    Remove the duplicated normalization in unique_slugs by reusing slugify if that
+    makes the code shorter and clearer. Preserve POSIX sh compatibility, ASCII-only
+    lowercasing, separator collapsing and edge trimming, empty-result filtering,
+    deduplication, and first-occurrence order. Preserve output newlines: slugify
+    emits none, unique_slugs emits one per slug. Keep variables and locale changes
+    isolated from callers, and keep sourcing the library free of execution effects.
+    Do not add dependencies, features, or files. Do not edit tests or docs.
+
+    Run sh -n demo/textkit.sh and sh demo/test.sh after editing. Also run focused
+    shell checks for empty input, all separators, no titles, and duplicate titles.
+    Do not save those checks in the checkout. Check that only demo/textkit.sh
+    changed. If validation fails, undo only your own edits and report the failure.
+    Return why the change is simpler and the actual commands and results.
